@@ -1,0 +1,34 @@
+/* edge cases for lexer: operators, floats, ++, --, &&, || */
+
+var i int;
+var f float;
+var flag bool;
+array arr = [1, 2, 3, 4, 5];
+
+i = -10;
+f = -3.25;
+flag = false || true && false;
+
+i += 5;
+i -= 2;
+i *= 3;
+i /= 2;
+i %= 2;
+
+i++;
+i--;
+++i;
+--i;
+
+if (i >= 0 && i <= 10 || flag == true) {
+    print(abs(i));
+    print(to_float(i));
+    print(length(arr));
+    print(max(arr));
+}
+
+foreach (x in arr) {
+    print(x);
+}
+
+/* comment with operators inside: ++ -- && || <= >= == != */

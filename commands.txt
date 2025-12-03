@@ -1,0 +1,5 @@
+# compile:
+g++ -std=c++17 -Wall -Wextra -O2 main.cpp Lexer.cpp -o lexer_test
+
+# test lexer:
+.\lexer_test test2.lang

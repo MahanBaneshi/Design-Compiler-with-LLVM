@@ -1,0 +1,20 @@
+/* simple test for lexer */
+
+var x int;
+var y float;
+var flag bool;
+array nums = [1, 2, 3, 4];
+
+x = 10;
+y = 3.14;
+flag = true;
+
+if (x > 5 && flag) {
+    print(x);
+} else {
+    print(to_int(y));
+}
+
+foreach (n in nums) {
+    print(n);
+}

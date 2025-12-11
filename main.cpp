@@ -5,9 +5,11 @@
 
 #include "Lexer.h"
 #include "Token.h"
+#include "parser.h"
+#include "ast_printer.h"
 
 int main(int argc, char** argv) {
-    // اگر اسم فایل ندادند، راهنمای ساده چاپ کن
+
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <source-file>\n";
         return 1;
@@ -24,27 +26,47 @@ int main(int argc, char** argv) {
     buffer << in.rdbuf();
     std::string source = buffer.str();
 
+    // === مرحله ۱: Lexer ===
     Lexer lexer(source);
     std::vector<Token> tokens = lexer.tokenizeAll();
 
-    std::cout << "Tokens for file: " << filename << "\n\n";
+    // حتما توکن EOF آخر لیست باشد
+    if (tokens.empty() || tokens.back().type != TokenType::END_OF_FILE) {
+        tokens.emplace_back(TokenType::END_OF_FILE, "", 0, 0);
+    }
 
+    std::cout << "\n=== TOKENS ===\n";
     for (const Token& tok : tokens) {
-        std::cout 
-            << "Line " << tok.line 
-            << ", Col " << tok.column 
+        std::cout
+            << "Line " << tok.line
+            << ", Col " << tok.column
             << " | " << tokenTypeToString(tok.type)
-            << " | \"" << tok.lexeme << "\"";
+            << " | \"" << tok.lexeme << "\"\n";
+    }
 
-        if (tok.type == TokenType::INVALID) {
-            std::cout << "   <-- INVALID TOKEN";
+    // === مرحله ۲: Parser ===
+    Parser parser(tokens);
+    ASTNodePtr ast;
+
+    try {
+        ast = parser.parseProgram();
+    } catch (const ParseException&) {
+        // نباید به اینجا برسیم چون کد داخل Parser خودش sync می‌کند،
+        // ولی اگر رسیدیم یعنی خطای نحوی ثبت شده است.
+    }
+
+    if (parser.hasErrors()) {
+        const auto& errs = parser.getErrors();
+        std::cerr << "\n=== PARSE ERRORS (" << errs.size() << ") ===\n";
+        for (std::size_t i = 0; i < errs.size(); ++i) {
+            const auto& e = errs[i];
+            std::cerr << "  [" << (i + 1) << "] "
+                      << "Line " << e.line << ", Col " << e.column
+                      << " : " << e.message << "\n";
         }
-
-        if (tok.type == TokenType::END_OF_FILE) {
-            std::cout << "   (EOF)";
-        }
-
-        std::cout << "\n";
+    } else {
+        std::cout << "\n=== PARSE OK ===\n";
+        printAST(ast);
     }
 
     return 0;

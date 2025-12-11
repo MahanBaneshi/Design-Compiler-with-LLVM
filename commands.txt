@@ -1,5 +1,27 @@
 # compile:
-g++ -std=c++17 -Wall -Wextra -O2 main.cpp Lexer.cpp -o lexer_test
+g++ -std=c++17 -Wall -Wextra -O2 main.cpp Lexer.cpp Parser.cpp -o main.exe
+
 
 # test lexer:
-.\lexer_test test2.lang
+.\lexer_test test3.lang
+
+
+make outputs:
+./main.exe test_inputs/01_decl.lang                 > outputs/01_decl.out                 2> outputs/01_decl.err
+./main.exe test_inputs/02_array.lang                > outputs/02_array.out                2> outputs/02_array.err
+./main.exe test_inputs/03_assign.lang               > outputs/03_assign.out               2> outputs/03_assign.err
+./main.exe test_inputs/04_unary.lang                > outputs/04_unary.out                2> outputs/04_unary.err
+./main.exe test_inputs/05_if.lang                   > outputs/05_if.out                   2> outputs/05_if.err
+./main.exe test_inputs/06_if_else_if.lang           > outputs/06_if_else_if.out           2> outputs/06_if_else_if.err
+./main.exe test_inputs/07_while.lang                > outputs/07_while.out                2> outputs/07_while.err
+./main.exe test_inputs/08_for.lang                  > outputs/08_for.out                  2> outputs/08_for.err
+./main.exe test_inputs/09_foreach.lang              > outputs/09_foreach.out              2> outputs/09_foreach.err
+./main.exe test_inputs/10_expression_arith.lang     > outputs/10_expression_arith.out     2> outputs/10_expression_arith.err
+./main.exe test_inputs/11_expression_bool.lang      > outputs/11_expression_bool.out      2> outputs/11_expression_bool.err
+./main.exe test_inputs/12_builtin.lang              > outputs/12_builtin.out              2> outputs/12_builtin.err
+./main.exe test_inputs/13_mix_all.lang              > outputs/13_mix_all.out              2> outputs/13_mix_all.err
+./main.exe test_inputs/14_errors_missing_semicolon.lang > outputs/14_errors_missing_semicolon.out 2> outputs/14_errors_missing_semicolon.err
+./main.exe test_inputs/15_errors_wrong_operator.lang    > outputs/15_errors_wrong_operator.out    2> outputs/15_errors_wrong_operator.err
+./main.exe test_inputs/16_errors_bad_braces.lang        > outputs/16_errors_bad_braces.out        2> outputs/16_errors_bad_braces.err
+./main.exe test_inputs/17_errors_bad_expr.lang          > outputs/17_errors_bad_expr.out          2> outputs/17_errors_bad_expr.err
+

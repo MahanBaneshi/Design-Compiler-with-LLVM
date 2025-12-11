@@ -1,0 +1,148 @@
+// ==========================
+// Top-level
+// ==========================
+
+Program        -> DeclOrStmtList EOF ;
+
+DeclOrStmtList -> ( DeclOrStmt )* ;
+
+DeclOrStmt     -> VarDecl
+                | ArrayDecl
+                | Stmt
+                ;
+
+// ==========================
+// Declarations
+// ==========================
+
+VarDecl        -> 'var' VarDeclList ';' ;
+
+VarDeclList    -> VarDeclItem ( ',' VarDeclItem )* ;
+
+VarDeclItem    -> IDENTIFIER Type ;
+
+Type           -> 'int'
+                | 'float'
+                | 'bool'
+                ;
+
+ArrayDecl      -> 'array' IDENTIFIER '=' ArrayLiteral ';' ;
+
+ArrayLiteral   -> '[' [ ExprList ] ']' ;
+
+ExprList       -> Expr ( ',' Expr )* ;
+
+// ==========================
+// Statements
+// ==========================
+
+Stmt           -> AssignStmt
+                | UnaryStmt
+                | PrintStmt
+                | IfStmt
+                | WhileStmt
+                | ForStmt
+                | ForeachStmt
+                | Block
+                ;
+
+AssignStmt     -> IDENTIFIER [ '[' Expr ']' ]
+                  ( '=' | '+=' | '-=' | '*=' | '/=' | '%=' ) Expr ';' ;
+
+UnaryStmt      -> IDENTIFIER ( '++' | '--' ) ';' ;
+
+PrintStmt      -> 'print' '(' Expr ')' ';' ;
+
+Block          -> '{' BlockBody '}' ;
+
+BlockBody      -> ( Stmt )* ;
+
+// ==========================
+// Conditionals & Loops
+// ==========================
+
+IfStmt         -> 'if' '(' BoolExpr ')' Block [ IfElsePart ] ;
+
+IfElsePart     -> 'else' ( IfStmt | Block ) ;
+
+WhileStmt      -> 'while' '(' BoolExpr ')' Block ;
+
+ForStmt        -> 'for' '(' ForInit ';' ForCond ';' ForUpdate ')' Block ;
+
+ForInit        -> IDENTIFIER '=' ArithExpr ;
+
+ForCond        -> BoolExpr ;
+
+ForUpdate      -> ( IDENTIFIER ( '++' | '--' )
+                  | IDENTIFIER ( '=' | '+=' | '-=' | '*=' | '/=' | '%=' ) Expr
+                  ) ;
+
+ForeachStmt    -> 'foreach' '(' IDENTIFIER 'in' IDENTIFIER ')' Block ;
+
+// ==========================
+// Expressions (precedence)
+// ==========================
+
+// Top-level expression
+Expr           -> BoolExpr ;
+
+// BoolExpr with precedence:
+//   BoolOr (||) over BoolAnd (&&) over relational, bitwise, arithmetic
+
+BoolExpr       -> BoolOr ;
+
+BoolOr         -> BoolAnd ( '||' BoolAnd )* ;
+
+BoolAnd        -> RelOrArith ( '&&' RelOrArith )* ;
+
+// Relational operators: <, >, <=, >=, ==, !=
+
+RelOrArith     -> BitOr [ RelOp BitOr ] ;
+
+RelOp          -> '<' | '>' | '<=' | '>=' | '==' | '!=' ;
+
+// Bitwise
+
+BitOr          -> BitAnd ( '|' BitAnd )* ;
+
+BitAnd         -> ArithExpr ( '&' ArithExpr )* ;
+
+// Arithmetic
+
+ArithExpr      -> Term ( ('+' | '-') Term )* ;
+
+Term           -> Power ( ('*' | '/' | '%') Power )* ;
+
+Power          -> Factor [ '^' Power ] ;
+
+// Factor:
+//   literals, identifiers, array indexing, builtin calls,
+//   parenthesized expression, unary +/-
+
+Factor         -> BOOL_LITERAL
+                | INT_LITERAL
+                | FLOAT_LITERAL
+                | IDENTIFIER [ '[' Expr ']' ]
+                | BuiltinCall
+                | '(' Expr ')'
+                | '+' Factor
+                | '-' Factor
+                ;
+
+// ==========================
+// Builtin functions
+// ==========================
+
+BuiltinCall    -> BuiltinName '(' [ ArgList ] ')' ;
+
+BuiltinName    -> 'to_int'
+                | 'to_float'
+                | 'to_bool'
+                | 'abs'
+                | 'length'
+                | 'max'
+                | 'index'
+                | 'find'
+                ;
+
+ArgList        -> Expr ( ',' Expr )* ;

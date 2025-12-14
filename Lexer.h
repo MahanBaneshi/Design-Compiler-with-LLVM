@@ -9,25 +9,21 @@ class Lexer {
 public:
     explicit Lexer(const std::string& source);
 
-    // توکن بعدی را برمی‌گرداند
     Token nextToken();
-
-    // برای راحتی: کل ورودی را tokenize می‌کند
     std::vector<Token> tokenizeAll();
 
 private:
     std::string source;
-    std::size_t current; // index در رشته
+    std::size_t current;
     int line;
     int column;
 
-    // Helpers
     bool isAtEnd() const;
     char peek() const;
     char peekNext() const;
     char advance();
 
-    void skipWhitespaceAndComments();
+    bool skipWhitespaceAndComments(Token& outError);
 
     Token makeToken(TokenType type, std::size_t start, std::size_t end,
                     int startLine, int startColumn);

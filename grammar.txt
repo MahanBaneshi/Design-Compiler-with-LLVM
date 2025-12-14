@@ -1,148 +1,90 @@
-// ==========================
-// Top-level
-// ==========================
+// grammar.txt:
 
 Program        -> DeclOrStmtList EOF ;
-
 DeclOrStmtList -> ( DeclOrStmt )* ;
+DeclOrStmt     -> VarDecl | ArrayDecl | Stmt ;
 
-DeclOrStmt     -> VarDecl
-                | ArrayDecl
-                | Stmt
-                ;
-
-// ==========================
 // Declarations
-// ==========================
-
 VarDecl        -> 'var' VarDeclList ';' ;
-
 VarDeclList    -> VarDeclItem ( ',' VarDeclItem )* ;
-
-VarDeclItem    -> IDENTIFIER Type ;
-
-Type           -> 'int'
-                | 'float'
-                | 'bool'
-                ;
+VarDeclItem    -> IDENTIFIER Type [ '=' Expr ] ;
+Type           -> 'int' | 'float' | 'bool' ;
 
 ArrayDecl      -> 'array' IDENTIFIER '=' ArrayLiteral ';' ;
-
 ArrayLiteral   -> '[' [ ExprList ] ']' ;
-
 ExprList       -> Expr ( ',' Expr )* ;
 
-// ==========================
 // Statements
-// ==========================
+Stmt           -> AssignOpStmt | PrintStmt | IfStmt | WhileStmt | ForStmt | ForeachStmt | Block ;
 
-Stmt           -> AssignStmt
-                | UnaryStmt
-                | PrintStmt
-                | IfStmt
-                | WhileStmt
-                | ForStmt
-                | ForeachStmt
-                | Block
-                ;
+AssignOpStmt   -> AddStmt | SubStmt | MulStmt | DivStmt | ModStmt
+               | IncStmt | DecStmt | PleStmt | MieStmt | AndStmt | OrStmt ;
 
-AssignStmt     -> IDENTIFIER [ '[' Expr ']' ]
-                  ( '=' | '+=' | '-=' | '*=' | '/=' | '%=' ) Expr ';' ;
+AddStmt        -> 'ADD' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+SubStmt        -> 'SUB' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+MulStmt        -> 'MUL' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+DivStmt        -> 'DIV' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+ModStmt        -> 'MOD' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
 
-UnaryStmt      -> IDENTIFIER ( '++' | '--' ) ';' ;
+IncStmt        -> 'INC' IDENTIFIER ';' ;
+DecStmt        -> 'DEC' IDENTIFIER ';' ;
+
+PleStmt        -> 'PLE' IDENTIFIER IDENTIFIER ';' ;
+MieStmt        -> 'MIE' IDENTIFIER IDENTIFIER ';' ;
+
+AndStmt        -> 'AND' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+OrStmt         -> 'OR'  IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
 
 PrintStmt      -> 'print' '(' Expr ')' ';' ;
 
 Block          -> '{' BlockBody '}' ;
-
 BlockBody      -> ( Stmt )* ;
 
-// ==========================
 // Conditionals & Loops
-// ==========================
-
 IfStmt         -> 'if' '(' BoolExpr ')' Block [ IfElsePart ] ;
-
 IfElsePart     -> 'else' ( IfStmt | Block ) ;
 
 WhileStmt      -> 'while' '(' BoolExpr ')' Block ;
 
+// Note: for-syntax stays as project sample; update init/update forms to match spec where needed
 ForStmt        -> 'for' '(' ForInit ';' ForCond ';' ForUpdate ')' Block ;
-
 ForInit        -> IDENTIFIER '=' ArithExpr ;
-
 ForCond        -> BoolExpr ;
+ForUpdate      -> IncStmtNoSemi | DecStmtNoSemi | AssignOpNoSemi ;
 
-ForUpdate      -> ( IDENTIFIER ( '++' | '--' )
-                  | IDENTIFIER ( '=' | '+=' | '-=' | '*=' | '/=' | '%=' ) Expr
-                  ) ;
+IncStmtNoSemi  -> 'INC' IDENTIFIER ;
+DecStmtNoSemi  -> 'DEC' IDENTIFIER ;
+
+AssignOpNoSemi -> 'ADD' IDENTIFIER IDENTIFIER IDENTIFIER
+               | 'SUB' IDENTIFIER IDENTIFIER IDENTIFIER
+               | 'MUL' IDENTIFIER IDENTIFIER IDENTIFIER
+               | 'DIV' IDENTIFIER IDENTIFIER IDENTIFIER
+               | 'MOD' IDENTIFIER IDENTIFIER IDENTIFIER
+               | 'PLE' IDENTIFIER IDENTIFIER
+               | 'MIE' IDENTIFIER IDENTIFIER
+               | 'AND' IDENTIFIER IDENTIFIER IDENTIFIER
+               | 'OR'  IDENTIFIER IDENTIFIER IDENTIFIER ;
 
 ForeachStmt    -> 'foreach' '(' IDENTIFIER 'in' IDENTIFIER ')' Block ;
 
-// ==========================
-// Expressions (precedence)
-// ==========================
-
-// Top-level expression
+// Expressions
 Expr           -> BoolExpr ;
-
-// BoolExpr with precedence:
-//   BoolOr (||) over BoolAnd (&&) over relational, bitwise, arithmetic
-
 BoolExpr       -> BoolOr ;
-
 BoolOr         -> BoolAnd ( '||' BoolAnd )* ;
-
 BoolAnd        -> RelOrArith ( '&&' RelOrArith )* ;
 
-// Relational operators: <, >, <=, >=, ==, !=
-
-RelOrArith     -> BitOr [ RelOp BitOr ] ;
-
+RelOrArith     -> ArithExpr [ RelOp ArithExpr ] ;
 RelOp          -> '<' | '>' | '<=' | '>=' | '==' | '!=' ;
 
-// Bitwise
-
-BitOr          -> BitAnd ( '|' BitAnd )* ;
-
-BitAnd         -> ArithExpr ( '&' ArithExpr )* ;
-
-// Arithmetic
-
 ArithExpr      -> Term ( ('+' | '-') Term )* ;
-
 Term           -> Power ( ('*' | '/' | '%') Power )* ;
-
 Power          -> Factor [ '^' Power ] ;
 
-// Factor:
-//   literals, identifiers, array indexing, builtin calls,
-//   parenthesized expression, unary +/-
+Factor         -> BOOL_LITERAL | INT_LITERAL | FLOAT_LITERAL
+               | IDENTIFIER [ '[' Expr ']' ] | BuiltinCall | '(' Expr ')'
+               | '+' Factor | '-' Factor ;
 
-Factor         -> BOOL_LITERAL
-                | INT_LITERAL
-                | FLOAT_LITERAL
-                | IDENTIFIER [ '[' Expr ']' ]
-                | BuiltinCall
-                | '(' Expr ')'
-                | '+' Factor
-                | '-' Factor
-                ;
-
-// ==========================
 // Builtin functions
-// ==========================
-
 BuiltinCall    -> BuiltinName '(' [ ArgList ] ')' ;
-
-BuiltinName    -> 'to_int'
-                | 'to_float'
-                | 'to_bool'
-                | 'abs'
-                | 'length'
-                | 'max'
-                | 'index'
-                | 'find'
-                ;
-
+BuiltinName    -> 'to_int' | 'to_float' | 'to_bool' | 'abs' | 'length' | 'max' | 'index' | 'find' ;
 ArgList        -> Expr ( ',' Expr )* ;

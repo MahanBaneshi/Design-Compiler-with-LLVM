@@ -1,5 +1,6 @@
+// Lexer.cpp
 #include "Lexer.h"
-#include <cctype>   // std::isalpha, std::isdigit
+#include <cctype>
 #include <stdexcept>
 
 Lexer::Lexer(const std::string& src)
@@ -39,9 +40,11 @@ bool Lexer::isAlphaNumeric(char c) {
     return isAlpha(c) || std::isdigit(static_cast<unsigned char>(c));
 }
 
-void Lexer::skipWhitespaceAndComments() {
+bool Lexer::skipWhitespaceAndComments(Token& outError) {
     while (!isAtEnd()) {
         char c = peek();
+
+        // whitespace
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n' ||
             c == '\f' || c == '\v') {
             advance();
@@ -50,25 +53,35 @@ void Lexer::skipWhitespaceAndComments() {
 
         // Comment: /* ... */
         if (c == '/' && peekNext() == '*') {
-            // consume '/*'
-            advance();
-            advance();
-            // skip until '*/' or EOF
+            int startLine = line;
+            int startColumn = column;
+
+            advance(); // '/'
+            advance(); // '*'
+
+            bool closed = false;
             while (!isAtEnd()) {
                 if (peek() == '*' && peekNext() == '/') {
                     advance(); // '*'
                     advance(); // '/'
+                    closed = true;
                     break;
                 }
                 advance();
             }
-            // اگر EOF شد و '*/' ندیدیم، فعلاً بی‌صدا ادامه می‌دهیم
+
+            if (!closed) {
+                outError = makeInvalidToken("Unterminated comment", startLine, startColumn);
+                return false;
+            }
+
             continue;
         }
 
-        // اگر نه whitespace و نه comment بود، می‌شکنیم
         break;
     }
+
+    return true;
 }
 
 Token Lexer::makeToken(TokenType type, std::size_t start, std::size_t end,
@@ -107,10 +120,21 @@ TokenType Lexer::keywordType(const std::string& ident) const {
     if (ident == "index")    return TokenType::KW_INDEX;
     if (ident == "find")     return TokenType::KW_FIND;
 
-    // true/false را به عنوان literal می‌گیریم، نه keyword
-    if (ident == "true" || ident == "false") {
+    // Phase1 assignment-style statements (UPPERCASE)
+    if (ident == "ADD")      return TokenType::KW_ADD;
+    if (ident == "SUB")      return TokenType::KW_SUB;
+    if (ident == "MUL")      return TokenType::KW_MUL;
+    if (ident == "DIV")      return TokenType::KW_DIV;
+    if (ident == "MOD")      return TokenType::KW_MOD;
+    if (ident == "INC")      return TokenType::KW_INC;
+    if (ident == "DEC")      return TokenType::KW_DEC;
+    if (ident == "PLE")      return TokenType::KW_PLE;
+    if (ident == "MIE")      return TokenType::KW_MIE;
+    if (ident == "AND")      return TokenType::KW_AND;
+    if (ident == "OR")       return TokenType::KW_OR;
+
+    if (ident == "true" || ident == "false")
         return TokenType::BOOL_LITERAL;
-    }
 
     return TokenType::IDENTIFIER;
 }
@@ -118,8 +142,7 @@ TokenType Lexer::keywordType(const std::string& ident) const {
 Token Lexer::identifierOrKeyword(char firstChar,
                                  std::size_t startIndex,
                                  int startLine, int startColumn) {
-    // firstChar already consumed
-    (void)firstChar; // unused warning
+    (void)firstChar;
     while (!isAtEnd() && isAlphaNumeric(peek())) {
         advance();
     }
@@ -132,19 +155,18 @@ Token Lexer::identifierOrKeyword(char firstChar,
 Token Lexer::numberLiteral(char firstChar,
                            std::size_t startIndex,
                            int startLine, int startColumn) {
-    (void)firstChar; // already consumed
+    (void)firstChar;
 
     bool isFloat = false;
 
-    // بخش صحیح
     while (!isAtEnd() && std::isdigit(static_cast<unsigned char>(peek()))) {
         advance();
     }
 
-    // بخش اعشاری
-    if (!isAtEnd() && peek() == '.' && std::isdigit(static_cast<unsigned char>(peekNext()))) {
+    if (!isAtEnd() && peek() == '.' &&
+        std::isdigit(static_cast<unsigned char>(peekNext()))) {
         isFloat = true;
-        advance(); // consume '.'
+        advance(); // '.'
         while (!isAtEnd() && std::isdigit(static_cast<unsigned char>(peek()))) {
             advance();
         }
@@ -160,7 +182,10 @@ Token Lexer::numberLiteral(char firstChar,
 }
 
 Token Lexer::nextToken() {
-    skipWhitespaceAndComments();
+    Token err;
+    if (!skipWhitespaceAndComments(err)) {
+        return err;
+    }
 
     if (isAtEnd()) {
         return Token(TokenType::END_OF_FILE, "", line, column);
@@ -172,19 +197,15 @@ Token Lexer::nextToken() {
 
     char c = advance();
 
-    // Identifier or keyword
     if (isAlpha(c)) {
         return identifierOrKeyword(c, startIndex, startLine, startColumn);
     }
 
-    // Number literal (int or float)
     if (std::isdigit(static_cast<unsigned char>(c))) {
         return numberLiteral(c, startIndex, startLine, startColumn);
     }
 
-    // Operators & punctuation
     switch (c) {
-        // Single-char punctuation
         case '(':
             return makeToken(TokenType::LPAREN, startIndex, current, startLine, startColumn);
         case ')':
@@ -202,53 +223,16 @@ Token Lexer::nextToken() {
         case ',':
             return makeToken(TokenType::COMMA, startIndex, current, startLine, startColumn);
 
-        // Operators with possible 2-char variants
-        case '+': {
-            if (peek() == '+') {
-                advance();
-                return makeToken(TokenType::PLUS_PLUS, startIndex, current, startLine, startColumn);
-            } else if (peek() == '=') {
-                advance();
-                return makeToken(TokenType::PLUS_EQ, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::PLUS, startIndex, current, startLine, startColumn);
-            }
-        }
-        case '-': {
-            if (peek() == '-') {
-                advance();
-                return makeToken(TokenType::MINUS_MINUS, startIndex, current, startLine, startColumn);
-            } else if (peek() == '=') {
-                advance();
-                return makeToken(TokenType::MINUS_EQ, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::MINUS, startIndex, current, startLine, startColumn);
-            }
-        }
-        case '*': {
-            if (peek() == '=') {
-                advance();
-                return makeToken(TokenType::STAR_EQ, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::STAR, startIndex, current, startLine, startColumn);
-            }
-        }
-        case '/': {
-            if (peek() == '=') {
-                advance();
-                return makeToken(TokenType::SLASH_EQ, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::SLASH, startIndex, current, startLine, startColumn);
-            }
-        }
-        case '%': {
-            if (peek() == '=') {
-                advance();
-                return makeToken(TokenType::PERCENT_EQ, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::PERCENT, startIndex, current, startLine, startColumn);
-            }
-        }
+        case '+':
+            return makeToken(TokenType::PLUS, startIndex, current, startLine, startColumn);
+        case '-':
+            return makeToken(TokenType::MINUS, startIndex, current, startLine, startColumn);
+        case '*':
+            return makeToken(TokenType::STAR, startIndex, current, startLine, startColumn);
+        case '/':
+            return makeToken(TokenType::SLASH, startIndex, current, startLine, startColumn);
+        case '%':
+            return makeToken(TokenType::PERCENT, startIndex, current, startLine, startColumn);
         case '^':
             return makeToken(TokenType::CARET, startIndex, current, startLine, startColumn);
 
@@ -256,59 +240,51 @@ Token Lexer::nextToken() {
             if (peek() == '=') {
                 advance();
                 return makeToken(TokenType::EQ, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::ASSIGN, startIndex, current, startLine, startColumn);
             }
+            return makeToken(TokenType::ASSIGN, startIndex, current, startLine, startColumn);
         }
 
         case '!': {
             if (peek() == '=') {
                 advance();
                 return makeToken(TokenType::NEQ, startIndex, current, startLine, startColumn);
-            } else {
-                // زبان ! (نفی) ندارد، پس این خطاست
-                return makeInvalidToken("Unexpected '!'", startLine, startColumn);
             }
+            return makeInvalidToken("Unexpected '!'", startLine, startColumn);
         }
 
         case '<': {
             if (peek() == '=') {
                 advance();
                 return makeToken(TokenType::LTE, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::LT, startIndex, current, startLine, startColumn);
             }
+            return makeToken(TokenType::LT, startIndex, current, startLine, startColumn);
         }
 
         case '>': {
             if (peek() == '=') {
                 advance();
                 return makeToken(TokenType::GTE, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::GT, startIndex, current, startLine, startColumn);
             }
+            return makeToken(TokenType::GT, startIndex, current, startLine, startColumn);
         }
 
         case '&': {
             if (peek() == '&') {
                 advance();
                 return makeToken(TokenType::LOGIC_AND, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::BIT_AND, startIndex, current, startLine, startColumn);
             }
+            return makeInvalidToken("Unexpected '&'", startLine, startColumn);
         }
 
         case '|': {
             if (peek() == '|') {
                 advance();
                 return makeToken(TokenType::LOGIC_OR, startIndex, current, startLine, startColumn);
-            } else {
-                return makeToken(TokenType::BIT_OR, startIndex, current, startLine, startColumn);
             }
+            return makeInvalidToken("Unexpected '|'", startLine, startColumn);
         }
 
         default:
-            // کاراکتر ناشناخته
             return makeInvalidToken(std::string("Unexpected character: '") + c + "'", startLine, startColumn);
     }
 }

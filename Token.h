@@ -30,13 +30,26 @@ enum class TokenType {
     KW_INDEX,      // index
     KW_FIND,       // find
 
+    // ===== Assignment-style statements (Phase1 spec) =====
+    KW_ADD,        // ADD x y z
+    KW_SUB,        // SUB x y z
+    KW_MUL,        // MUL x y z
+    KW_DIV,        // DIV x y z
+    KW_MOD,        // MOD x y z
+    KW_INC,        // INC x
+    KW_DEC,        // DEC x
+    KW_PLE,        // PLE x y
+    KW_MIE,        // MIE x y
+    KW_AND,        // AND x y z
+    KW_OR,         // OR x y z
+
     // ===== Literals & identifiers =====
     IDENTIFIER,
     INT_LITERAL,
     FLOAT_LITERAL,
     BOOL_LITERAL,  // true / false
 
-    // ===== Operators (arithmetic) =====
+    // ===== Operators (expressions / conditions) =====
     PLUS,          // +
     MINUS,         // -
     STAR,          // *
@@ -47,13 +60,7 @@ enum class TokenType {
     PLUS_PLUS,     // ++
     MINUS_MINUS,   // --
 
-    PLUS_EQ,       // +=
-    MINUS_EQ,      // -=
-    STAR_EQ,       // *=
-    SLASH_EQ,      // /=
-    PERCENT_EQ,    // %=
-
-    ASSIGN,        // =
+    ASSIGN,        // =   (used in var init / for init)
 
     // ===== Relational =====
     EQ,            // ==
@@ -63,11 +70,9 @@ enum class TokenType {
     GTE,           // >=
     LTE,           // <=
 
-    // ===== Logical / bitwise =====
+    // ===== Logical =====
     LOGIC_AND,     // &&
     LOGIC_OR,      // ||
-    BIT_AND,       // &
-    BIT_OR,        // |
 
     // ===== Punctuation =====
     LPAREN,        // (
@@ -110,6 +115,7 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::KW_FOREACH: return "KW_FOREACH";
         case TokenType::KW_IN: return "KW_IN";
         case TokenType::KW_PRINT: return "KW_PRINT";
+
         case TokenType::KW_TO_INT: return "KW_TO_INT";
         case TokenType::KW_TO_FLOAT: return "KW_TO_FLOAT";
         case TokenType::KW_TO_BOOL: return "KW_TO_BOOL";
@@ -118,34 +124,46 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::KW_MAX: return "KW_MAX";
         case TokenType::KW_INDEX: return "KW_INDEX";
         case TokenType::KW_FIND: return "KW_FIND";
+
+        case TokenType::KW_ADD: return "KW_ADD";
+        case TokenType::KW_SUB: return "KW_SUB";
+        case TokenType::KW_MUL: return "KW_MUL";
+        case TokenType::KW_DIV: return "KW_DIV";
+        case TokenType::KW_MOD: return "KW_MOD";
+        case TokenType::KW_INC: return "KW_INC";
+        case TokenType::KW_DEC: return "KW_DEC";
+        case TokenType::KW_PLE: return "KW_PLE";
+        case TokenType::KW_MIE: return "KW_MIE";
+        case TokenType::KW_AND: return "KW_AND";
+        case TokenType::KW_OR:  return "KW_OR";
+
         case TokenType::IDENTIFIER: return "IDENTIFIER";
         case TokenType::INT_LITERAL: return "INT_LITERAL";
         case TokenType::FLOAT_LITERAL: return "FLOAT_LITERAL";
         case TokenType::BOOL_LITERAL: return "BOOL_LITERAL";
+
         case TokenType::PLUS: return "PLUS";
         case TokenType::MINUS: return "MINUS";
         case TokenType::STAR: return "STAR";
         case TokenType::SLASH: return "SLASH";
         case TokenType::PERCENT: return "PERCENT";
         case TokenType::CARET: return "CARET";
+
         case TokenType::PLUS_PLUS: return "PLUS_PLUS";
         case TokenType::MINUS_MINUS: return "MINUS_MINUS";
-        case TokenType::PLUS_EQ: return "PLUS_EQ";
-        case TokenType::MINUS_EQ: return "MINUS_EQ";
-        case TokenType::STAR_EQ: return "STAR_EQ";
-        case TokenType::SLASH_EQ: return "SLASH_EQ";
-        case TokenType::PERCENT_EQ: return "PERCENT_EQ";
+
         case TokenType::ASSIGN: return "ASSIGN";
+
         case TokenType::EQ: return "EQ";
         case TokenType::NEQ: return "NEQ";
         case TokenType::GT: return "GT";
         case TokenType::LT: return "LT";
         case TokenType::GTE: return "GTE";
         case TokenType::LTE: return "LTE";
+
         case TokenType::LOGIC_AND: return "LOGIC_AND";
         case TokenType::LOGIC_OR: return "LOGIC_OR";
-        case TokenType::BIT_AND: return "BIT_AND";
-        case TokenType::BIT_OR: return "BIT_OR";
+
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
         case TokenType::LBRACE: return "LBRACE";
@@ -154,6 +172,7 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::RBRACKET: return "RBRACKET";
         case TokenType::COMMA: return "COMMA";
         case TokenType::SEMICOLON: return "SEMICOLON";
+
         case TokenType::END_OF_FILE: return "END_OF_FILE";
         case TokenType::INVALID: return "INVALID";
         default: return "UNKNOWN";

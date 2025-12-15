@@ -1,3 +1,4 @@
+// Generates a DOT call graph for all functions in an LLVM module and writes it to a file.
 #pragma once
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Function.h>

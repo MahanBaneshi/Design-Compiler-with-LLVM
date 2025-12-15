@@ -1,3 +1,4 @@
+// Serializes the AST into a simple JSON-like string representation.
 #pragma once
 #include "parser.h"
 #include <string>

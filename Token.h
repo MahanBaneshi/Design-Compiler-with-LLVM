@@ -4,101 +4,39 @@
 #include <string>
 
 enum class TokenType {
-    // ===== Keywords =====
-    KW_VAR,        // var
-    KW_INT,        // int
-    KW_FLOAT,      // float
-    KW_BOOL,       // bool
-    KW_ARRAY,      // array
+    KW_VAR, KW_INT, KW_FLOAT, KW_BOOL, KW_ARRAY,
+    KW_IF, KW_ELSE, KW_WHILE, KW_FOR, KW_FOREACH, KW_IN,
+    KW_PRINT,
+    KW_TO_INT, KW_TO_FLOAT, KW_TO_BOOL, KW_ABS, KW_LENGTH, KW_MAX, KW_INDEX, KW_FIND,
+    KW_ADD, KW_SUB, KW_MUL, KW_DIV, KW_MOD, KW_INC, KW_DEC, KW_PLE, KW_MIE, KW_AND, KW_OR,
+    KW_MATCH, KW_CASE, KW_DEFAULT,
 
-    KW_IF,         // if
-    KW_ELSE,       // else
-    KW_WHILE,      // while
-    KW_FOR,        // for
-    KW_FOREACH,    // foreach
-    KW_IN,         // in
+    IDENTIFIER, INT_LITERAL, FLOAT_LITERAL, BOOL_LITERAL, STRING_LITERAL,
 
-    KW_PRINT,      // print
+    PLUS, MINUS, STAR, SLASH, PERCENT, CARET,
+    PLUS_PLUS, MINUS_MINUS,
+    ASSIGN,
+    ARROW,
 
-    // Built-in functions
-    KW_TO_INT,     // to_int
-    KW_TO_FLOAT,   // to_float
-    KW_TO_BOOL,    // to_bool
-    KW_ABS,        // abs
-    KW_LENGTH,     // length
-    KW_MAX,        // max
-    KW_INDEX,      // index
-    KW_FIND,       // find
+    EQ, NEQ, GT, LT, GTE, LTE,
+    LOGIC_AND, LOGIC_OR,
 
-    // ===== Assignment-style statements (Phase1 spec) =====
-    KW_ADD,        // ADD x y z
-    KW_SUB,        // SUB x y z
-    KW_MUL,        // MUL x y z
-    KW_DIV,        // DIV x y z
-    KW_MOD,        // MOD x y z
-    KW_INC,        // INC x
-    KW_DEC,        // DEC x
-    KW_PLE,        // PLE x y
-    KW_MIE,        // MIE x y
-    KW_AND,        // AND x y z
-    KW_OR,         // OR x y z
+    LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET,
+    COMMA, SEMICOLON, COLON,
+    UNDERSCORE,
 
-    // ===== Literals & identifiers =====
-    IDENTIFIER,
-    INT_LITERAL,
-    FLOAT_LITERAL,
-    BOOL_LITERAL,  // true / false
-
-    // ===== Operators (expressions / conditions) =====
-    PLUS,          // +
-    MINUS,         // -
-    STAR,          // *
-    SLASH,         // /
-    PERCENT,       // %
-    CARET,         // ^
-
-    PLUS_PLUS,     // ++
-    MINUS_MINUS,   // --
-
-    ASSIGN,        // =   (used in var init / for init)
-
-    // ===== Relational =====
-    EQ,            // ==
-    NEQ,           // !=
-    GT,            // >
-    LT,            // <
-    GTE,           // >=
-    LTE,           // <=
-
-    // ===== Logical =====
-    LOGIC_AND,     // &&
-    LOGIC_OR,      // ||
-
-    // ===== Punctuation =====
-    LPAREN,        // (
-    RPAREN,        // )
-    LBRACE,        // {
-    RBRACE,        // }
-    LBRACKET,      // [
-    RBRACKET,      // ]
-    COMMA,         // ,
-    SEMICOLON,     // ;
-
-    // ===== Special =====
     END_OF_FILE,
-    INVALID        // for lexing errors (unknown character, etc.)
+    INVALID
 };
 
 struct Token {
     TokenType type;
     std::string lexeme;
     int line;
-    int column; // starting column of this token (1-based)
+    int column;
 
     Token() : type(TokenType::INVALID), lexeme(""), line(0), column(0) {}
-
-    Token(TokenType t, const std::string& lex, int l, int c)
-        : type(t), lexeme(lex), line(l), column(c) {}
+    Token(TokenType t, const std::string& lex, int l, int c) : type(t), lexeme(lex), line(l), column(c) {}
 };
 
 inline const char* tokenTypeToString(TokenType t) {
@@ -108,12 +46,14 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::KW_FLOAT: return "KW_FLOAT";
         case TokenType::KW_BOOL: return "KW_BOOL";
         case TokenType::KW_ARRAY: return "KW_ARRAY";
+
         case TokenType::KW_IF: return "KW_IF";
         case TokenType::KW_ELSE: return "KW_ELSE";
         case TokenType::KW_WHILE: return "KW_WHILE";
         case TokenType::KW_FOR: return "KW_FOR";
         case TokenType::KW_FOREACH: return "KW_FOREACH";
         case TokenType::KW_IN: return "KW_IN";
+
         case TokenType::KW_PRINT: return "KW_PRINT";
 
         case TokenType::KW_TO_INT: return "KW_TO_INT";
@@ -135,12 +75,17 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::KW_PLE: return "KW_PLE";
         case TokenType::KW_MIE: return "KW_MIE";
         case TokenType::KW_AND: return "KW_AND";
-        case TokenType::KW_OR:  return "KW_OR";
+        case TokenType::KW_OR: return "KW_OR";
+
+        case TokenType::KW_MATCH: return "KW_MATCH";
+        case TokenType::KW_CASE: return "KW_CASE";
+        case TokenType::KW_DEFAULT: return "KW_DEFAULT";
 
         case TokenType::IDENTIFIER: return "IDENTIFIER";
         case TokenType::INT_LITERAL: return "INT_LITERAL";
         case TokenType::FLOAT_LITERAL: return "FLOAT_LITERAL";
         case TokenType::BOOL_LITERAL: return "BOOL_LITERAL";
+        case TokenType::STRING_LITERAL: return "STRING_LITERAL";
 
         case TokenType::PLUS: return "PLUS";
         case TokenType::MINUS: return "MINUS";
@@ -148,11 +93,11 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::SLASH: return "SLASH";
         case TokenType::PERCENT: return "PERCENT";
         case TokenType::CARET: return "CARET";
-
         case TokenType::PLUS_PLUS: return "PLUS_PLUS";
         case TokenType::MINUS_MINUS: return "MINUS_MINUS";
-
         case TokenType::ASSIGN: return "ASSIGN";
+
+        case TokenType::ARROW: return "ARROW";
 
         case TokenType::EQ: return "EQ";
         case TokenType::NEQ: return "NEQ";
@@ -172,6 +117,8 @@ inline const char* tokenTypeToString(TokenType t) {
         case TokenType::RBRACKET: return "RBRACKET";
         case TokenType::COMMA: return "COMMA";
         case TokenType::SEMICOLON: return "SEMICOLON";
+        case TokenType::COLON: return "COLON";
+        case TokenType::UNDERSCORE: return "UNDERSCORE";
 
         case TokenType::END_OF_FILE: return "END_OF_FILE";
         case TokenType::INVALID: return "INVALID";
@@ -179,4 +126,4 @@ inline const char* tokenTypeToString(TokenType t) {
     }
 }
 
-#endif // TOKEN_H
+#endif

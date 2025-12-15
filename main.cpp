@@ -14,9 +14,6 @@
 #include "ast_json.h"
 #include "tokens_json.h"
 
-// -----------------------------------------
-// CmdOptions + parseArgs
-// -----------------------------------------
 struct CmdOptions {
     bool run = true;
     std::string irPath = "output.ll";
@@ -77,22 +74,15 @@ static bool parseArgs(int argc, char** argv, CmdOptions& opts) {
     return true;
 }
 
-// -----------------------------------------
-// MAIN
-// -----------------------------------------
 int main(int argc, char** argv) {
-
     uint64_t t_start = now_ms();
 
     CmdOptions opts;
-    if (!parseArgs(argc, argv, opts)) {
-        return 1;
-    }
+    if (!parseArgs(argc, argv, opts)) return 1;
 
-    const char* filename = opts.sourceFile.c_str();
-    std::ifstream in(filename);
+    std::ifstream in(opts.sourceFile);
     if (!in) {
-        std::cerr << "Error: cannot open file: " << filename << "\n";
+        std::cerr << "Error: cannot open file: " << opts.sourceFile << "\n";
         return 1;
     }
 
@@ -100,16 +90,15 @@ int main(int argc, char** argv) {
     buffer << in.rdbuf();
     std::string source = buffer.str();
 
-    // === Lexer ===
     Lexer lexer(source);
     std::vector<Token> tokens = lexer.tokenizeAll();
+    if (tokens.empty() || tokens.back().type != TokenType::END_OF_FILE) {
+        tokens.emplace_back(TokenType::END_OF_FILE, "", 0, 0);
+    }
+
     {
         std::ofstream jt("tokens.json");
         jt << tokensToJson(tokens);
-    }
-
-    if (tokens.empty() || tokens.back().type != TokenType::END_OF_FILE) {
-        tokens.emplace_back(TokenType::END_OF_FILE, "", 0, 0);
     }
 
     uint64_t t_after_lex = now_ms();
@@ -117,17 +106,14 @@ int main(int argc, char** argv) {
 
     std::cout << "\n=== TOKENS ===\n";
     for (const Token& tok : tokens) {
-        std::cout
-            << "Line " << tok.line
-            << ", Col " << tok.column
-            << " | " << tokenTypeToString(tok.type)
-            << " | \"" << tok.lexeme << "\"\n";
+        std::cout << "Line " << tok.line
+                  << ", Col " << tok.column
+                  << " | " << tokenTypeToString(tok.type)
+                  << " | \"" << tok.lexeme << "\"\n";
     }
 
-    // === Parser ===
     Parser parser(tokens);
     ASTNodePtr ast;
-
     try {
         ast = parser.parseProgram();
     } catch (const ParseException&) {}
@@ -152,6 +138,7 @@ int main(int argc, char** argv) {
 
     std::cout << "\n=== PARSE OK ===\n";
     printAST(ast);
+
     {
         std::ofstream js("ast.json");
         js << astToJson(ast);
@@ -160,21 +147,24 @@ int main(int argc, char** argv) {
     std::cout << "\n=== SEMANTIC ANALYSIS ===\n";
 
     Sema sema(ast);
-    bool semaOK = sema.analyze();
-
-    if (!semaOK) {
-        std::cerr << "\n=== SEMANTIC ERRORS DETECTED ===\n";
+    if (!sema.analyze()) {
+        std::cerr << "\n=== SEMANTIC ERRORS (" << sema.getErrors().size() << ") ===\n";
+        const auto& errs = sema.getErrors();
+        for (std::size_t i = 0; i < errs.size(); ++i) {
+            const auto& e = errs[i];
+            std::cerr << "  [" << (i + 1) << "] "
+                      << "Line " << e.line << ", Col " << e.column
+                      << " : " << e.message << "\n";
+        }
         return 1;
     }
 
     uint64_t t_after_sema = now_ms();
     std::cerr << "[TRACE] sema_ms=" << (t_after_sema - t_after_parse) << "\n";
-
     std::cout << "=== SEMANTIC OK ===\n";
 
     CodeGen codegen("MainModule");
-    bool ok = codegen.compile(ast);
-    if (!ok) {
+    if (!codegen.compile(ast)) {
         std::cerr << "Code generation failed.\n";
         return 1;
     }
@@ -197,10 +187,5 @@ int main(int argc, char** argv) {
         }
     }
 
-    int exitCode = 0;
-    if (opts.run) {
-        exitCode = codegen.runMain();
-    }
-
-    return exitCode;
+    return opts.run ? codegen.runMain() : 0;
 }

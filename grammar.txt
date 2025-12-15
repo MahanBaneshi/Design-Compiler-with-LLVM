@@ -1,90 +1,72 @@
-// grammar.txt:
+Program -> DeclOrStmtList EOF ;
+DeclOrStmtList -> (DeclOrStmt)* ;
+DeclOrStmt -> VarDecl | TypedVarDecl | ArrayDecl | Stmt ;
 
-Program        -> DeclOrStmtList EOF ;
-DeclOrStmtList -> ( DeclOrStmt )* ;
-DeclOrStmt     -> VarDecl | ArrayDecl | Stmt ;
+VarDecl -> 'var' VarDeclList ';' ;
+VarDeclList -> VarDeclItem (',' VarDeclItem)* ;
+VarDeclItem -> IDENTIFIER Type ('=' Expr)? ;
 
-// Declarations
-VarDecl        -> 'var' VarDeclList ';' ;
-VarDeclList    -> VarDeclItem ( ',' VarDeclItem )* ;
-VarDeclItem    -> IDENTIFIER Type [ '=' Expr ] ;
-Type           -> 'int' | 'float' | 'bool' ;
+TypedVarDecl -> Type TypedVarDeclList ';' ;
+TypedVarDeclList -> TypedVarDeclItem (',' TypedVarDeclItem)* ;
+TypedVarDeclItem -> IDENTIFIER ('=' Expr)? ;
 
-ArrayDecl      -> 'array' IDENTIFIER '=' ArrayLiteral ';' ;
-ArrayLiteral   -> '[' [ ExprList ] ']' ;
-ExprList       -> Expr ( ',' Expr )* ;
+Type -> 'int' | 'float' | 'bool' ;
 
-// Statements
-Stmt           -> AssignOpStmt | PrintStmt | IfStmt | WhileStmt | ForStmt | ForeachStmt | Block ;
+ArrayDecl -> 'array' IDENTIFIER ('=' ArrayInit)? ';' ;
+ArrayInit -> ArrayLiteral | ArrayComp ;
 
-AssignOpStmt   -> AddStmt | SubStmt | MulStmt | DivStmt | ModStmt
-               | IncStmt | DecStmt | PleStmt | MieStmt | AndStmt | OrStmt ;
+ArrayLiteral -> '[' (ExprList)? ']' ;
+ExprList -> Expr (',' Expr)* ;
+ArrayComp -> '[' Expr 'for' IDENTIFIER 'in' IDENTIFIER ('if' CondExpr)? ']' ;
 
-AddStmt        -> 'ADD' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
-SubStmt        -> 'SUB' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
-MulStmt        -> 'MUL' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
-DivStmt        -> 'DIV' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
-ModStmt        -> 'MOD' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+Stmt -> AssignOpStmt ';' | PrintStmt ';' | MatchStmt | IfStmt | WhileStmt | ForStmt | ForeachStmt | Block ;
 
-IncStmt        -> 'INC' IDENTIFIER ';' ;
-DecStmt        -> 'DEC' IDENTIFIER ';' ;
+AssignOpStmt -> 'ADD' LValue Expr Expr | 'SUB' LValue Expr Expr | 'MUL' LValue Expr Expr | 'DIV' LValue Expr Expr | 'MOD' LValue Expr Expr
+             | 'PLE' LValue Expr | 'MIE' LValue Expr | 'AND' LValue BoolAtom BoolAtom | 'OR' LValue BoolAtom BoolAtom | 'INC' LValue | 'DEC' LValue ;
 
-PleStmt        -> 'PLE' IDENTIFIER IDENTIFIER ';' ;
-MieStmt        -> 'MIE' IDENTIFIER IDENTIFIER ';' ;
+LValue -> IDENTIFIER | IDENTIFIER '[' Expr ']' ;
 
-AndStmt        -> 'AND' IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
-OrStmt         -> 'OR'  IDENTIFIER IDENTIFIER IDENTIFIER ';' ;
+PrintStmt -> 'print' '(' Expr ')' ;
 
-PrintStmt      -> 'print' '(' Expr ')' ';' ;
+MatchStmt -> 'match' Expr '{' MatchCaseListOpt '}' ;
+MatchCaseListOpt -> ε | MatchCaseList ;
+MatchCaseList -> MatchCase (',' MatchCase)* (',')? ;
+MatchCase -> MatchPattern '->' MatchBody ;
+MatchBody -> PrintStmt | Block | AssignOpStmt ';' ;
+MatchPattern -> NUMBER | 'true' | 'false' | IDENTIFIER | '_' ;
 
-Block          -> '{' BlockBody '}' ;
-BlockBody      -> ( Stmt )* ;
+IfStmt -> 'if' '(' CondExpr ')' Block (ElseIfPart)* (ElsePart)? ;
+ElseIfPart -> 'else' 'if' '(' CondExpr ')' Block ;
+ElsePart -> 'else' Block ;
 
-// Conditionals & Loops
-IfStmt         -> 'if' '(' BoolExpr ')' Block [ IfElsePart ] ;
-IfElsePart     -> 'else' ( IfStmt | Block ) ;
+WhileStmt -> 'while' '(' CondExpr ')' Block ;
 
-WhileStmt      -> 'while' '(' BoolExpr ')' Block ;
+ForStmt -> 'for' '(' ForInit ';' CondExpr ';' ForUpdate ')' Block ;
+ForInit -> ('int' IDENTIFIER '=' Expr) | (IDENTIFIER '=' Expr) | ε ;
+ForUpdate -> IDENTIFIER '++' | IDENTIFIER '--' | 'INC' LValue | 'DEC' LValue | 'PLE' LValue Expr | 'MIE' LValue Expr | ε ;
 
-// Note: for-syntax stays as project sample; update init/update forms to match spec where needed
-ForStmt        -> 'for' '(' ForInit ';' ForCond ';' ForUpdate ')' Block ;
-ForInit        -> IDENTIFIER '=' ArithExpr ;
-ForCond        -> BoolExpr ;
-ForUpdate      -> IncStmtNoSemi | DecStmtNoSemi | AssignOpNoSemi ;
+ForeachStmt -> 'foreach' '(' IDENTIFIER 'in' IDENTIFIER ')' Block ;
 
-IncStmtNoSemi  -> 'INC' IDENTIFIER ;
-DecStmtNoSemi  -> 'DEC' IDENTIFIER ;
+Block -> '{' (Stmt)* '}' ;
 
-AssignOpNoSemi -> 'ADD' IDENTIFIER IDENTIFIER IDENTIFIER
-               | 'SUB' IDENTIFIER IDENTIFIER IDENTIFIER
-               | 'MUL' IDENTIFIER IDENTIFIER IDENTIFIER
-               | 'DIV' IDENTIFIER IDENTIFIER IDENTIFIER
-               | 'MOD' IDENTIFIER IDENTIFIER IDENTIFIER
-               | 'PLE' IDENTIFIER IDENTIFIER
-               | 'MIE' IDENTIFIER IDENTIFIER
-               | 'AND' IDENTIFIER IDENTIFIER IDENTIFIER
-               | 'OR'  IDENTIFIER IDENTIFIER IDENTIFIER ;
+CondExpr -> OrExpr ;
+OrExpr -> AndExpr ( '||' AndExpr )* ;
+AndExpr -> RelExpr ( '&&' RelExpr )* ;
+RelExpr -> Expr RelOp Expr | BoolAtom ;
+RelOp -> '==' | '!=' | '>' | '>=' | '<' | '<=' ;
+BoolAtom -> 'true' | 'false' | IDENTIFIER | '(' CondExpr ')' ;
 
-ForeachStmt    -> 'foreach' '(' IDENTIFIER 'in' IDENTIFIER ')' Block ;
+Expr -> AddExpr ;
+AddExpr -> MulExpr (('+'|'-') MulExpr)* ;
+MulExpr -> PowExpr (('*'|'/'|'%') PowExpr)* ;
+PowExpr -> UnaryExpr ( '^' UnaryExpr )* ;
+UnaryExpr -> ('+'|'-') UnaryExpr | Primary ;
 
-// Expressions
-Expr           -> BoolExpr ;
-BoolExpr       -> BoolOr ;
-BoolOr         -> BoolAnd ( '||' BoolAnd )* ;
-BoolAnd        -> RelOrArith ( '&&' RelOrArith )* ;
+Primary -> NUMBER | IDENTIFIER | IDENTIFIER '[' Expr ']' | CallExpr | '(' Expr ')' ;
 
-RelOrArith     -> ArithExpr [ RelOp ArithExpr ] ;
-RelOp          -> '<' | '>' | '<=' | '>=' | '==' | '!=' ;
+CallExpr -> ('to_int'|'to_float'|'to_bool'|'abs'|'length'|'max') '(' ArgListOpt ')'
+          | 'index' '(' Expr ',' Expr ')'
+          | 'find' '(' Expr ',' CondExpr ')' ;
 
-ArithExpr      -> Term ( ('+' | '-') Term )* ;
-Term           -> Power ( ('*' | '/' | '%') Power )* ;
-Power          -> Factor [ '^' Power ] ;
-
-Factor         -> BOOL_LITERAL | INT_LITERAL | FLOAT_LITERAL
-               | IDENTIFIER [ '[' Expr ']' ] | BuiltinCall | '(' Expr ')'
-               | '+' Factor | '-' Factor ;
-
-// Builtin functions
-BuiltinCall    -> BuiltinName '(' [ ArgList ] ')' ;
-BuiltinName    -> 'to_int' | 'to_float' | 'to_bool' | 'abs' | 'length' | 'max' | 'index' | 'find' ;
-ArgList        -> Expr ( ',' Expr )* ;
+ArgListOpt -> ε | ArgList ;
+ArgList -> Expr (',' Expr)* ;

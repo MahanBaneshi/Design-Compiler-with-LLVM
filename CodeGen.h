@@ -1,4 +1,3 @@
-// CodeGen.h
 #pragma once
 
 #include <string>
@@ -8,9 +7,6 @@
 #include "parser.h"
 #include "Sema.h"
 
-// =======================
-// LLVM HEADERS
-// =======================
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
@@ -41,11 +37,17 @@ private:
     void genStmt(const ASTNodePtr& node);
     void genStmtList(const ASTNodePtr& node);
     void genVarDecl(const ASTNodePtr& node);
+    void genTypedVarDecl(const ASTNodePtr& node);
+    void genArrayDecl(const ASTNodePtr& node);
+    llvm::Value* genArrayInit(const ASTNodePtr& node);
+    llvm::Value* genArrayLiteral(const ASTNodePtr& node);
+    llvm::Value* genArrayComp(const ASTNodePtr& node);
 
-    // updated for Phase1 assignment syntax
     void genAssignOpStmt(const ASTNodePtr& node);
 
     void genPrint(const ASTNodePtr& node);
+    void genMatch(const ASTNodePtr& node);
+
     void genBlock(const ASTNodePtr& node);
     void genIf(const ASTNodePtr& node);
     void genWhile(const ASTNodePtr& node);
@@ -54,7 +56,7 @@ private:
 
     // --- Expressions ---
     llvm::Value* genExpr(const ASTNodePtr& node);
-    llvm::Value* genBoolExpr(const ASTNodePtr& node);
+    llvm::Value* genCondExpr(const ASTNodePtr& node);
     llvm::Value* genBoolOr(const ASTNodePtr& node);
     llvm::Value* genBoolAnd(const ASTNodePtr& node);
     llvm::Value* genRel(const ASTNodePtr& node);
@@ -62,21 +64,28 @@ private:
     llvm::Value* genTerm(const ASTNodePtr& node);
     llvm::Value* genPower(const ASTNodePtr& node);
     llvm::Value* genFactor(const ASTNodePtr& node);
+    llvm::Value* genBuiltinCall(const ASTNodePtr& node);
 
-    // --- Helpers ---
-    llvm::Type* mapType(const std::string& tname);
+    // --- LValue / Vars ---
+    llvm::Value* genLValuePtr(const ASTNodePtr& node);
     llvm::Value* loadVar(const std::string& name);
     llvm::Value* storeVar(const std::string& name, llvm::Value* val);
 
+    // --- Helpers ---
+    llvm::Type* mapTypeName(const std::string& tname);
     llvm::Value* implicitCast(llvm::Value* v, llvm::Type* targetType);
-    bool isFloat(llvm::Type* t);
-    bool isInt(llvm::Type* t);
-    bool isBool(llvm::Type* t);
+    bool isFloat(llvm::Type* t) const;
+    bool isInt(llvm::Type* t) const;
+    bool isBool(llvm::Type* t) const;
+
+    llvm::Function* getOrCreatePrintI32();
+    llvm::Function* getOrCreatePrintF64();
+    llvm::Function* getOrCreatePrintBool();
 
 public:
     std::unique_ptr<llvm::LLVMContext> Ctx;
     std::unique_ptr<llvm::Module> Mod;
-    llvm::IRBuilder<>* Builder;
+    std::unique_ptr<llvm::IRBuilder<>> Builder;
 
     llvm::Function* MainFn = nullptr;
 

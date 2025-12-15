@@ -1,6 +1,7 @@
+// Provides simple utilities for timing and counting AST nodes.
 #pragma once
 #include <chrono>
-#include "parser.h"   // برای ASTNodePtr
+#include "parser.h"
 
 inline uint64_t now_ms() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(

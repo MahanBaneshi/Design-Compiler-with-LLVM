@@ -1,4 +1,3 @@
-// parser.h
 #pragma once
 
 #include <vector>
@@ -7,6 +6,10 @@
 #include <stdexcept>
 
 #include "Token.h"
+
+// =============================
+// Parse error
+// =============================
 
 struct ParseError {
     int line;
@@ -20,18 +23,37 @@ public:
         : std::runtime_error(msg) {}
 };
 
+// =============================
+// AST
+// =============================
+
 enum class ASTNodeType {
     Program,
     StmtList,
     Block,
 
     VarDecl,
+    VarDeclList,
     VarDeclItem,
-    ArrayDecl,
-    ArrayLiteral,
 
-    AssignOpStmt,   // ADD / SUB / MUL / ...
+    TypedVarDecl,
+    TypedVarDeclItem,
+
+    ArrayDecl,
+    ArrayInit,
+    ArrayLiteral,
+    ArrayComp,
+    ExprList,
+
+    AssignOpStmt,
     PrintStmt,
+
+    MatchStmt,
+    MatchCaseList,
+    MatchCase,
+    MatchPattern,
+    MatchBody,
+
     IfStmt,
     WhileStmt,
     ForStmt,
@@ -42,7 +64,7 @@ enum class ASTNodeType {
     ForUpdate,
 
     Expr,
-    BoolExpr,
+    CondExpr,
     BoolOr,
     BoolAnd,
     RelExpr,
@@ -54,10 +76,14 @@ enum class ASTNodeType {
     BuiltinCall,
     ArgList,
 
+    LValue,
+
     Identifier,
     IntLiteral,
     FloatLiteral,
     BoolLiteral,
+    StringLiteral,
+    Underscore
 };
 
 struct ASTNode {
@@ -71,9 +97,13 @@ struct ASTNode {
 
 using ASTNodePtr = std::shared_ptr<ASTNode>;
 
+// =============================
+// Parser
+// =============================
+
 class Parser {
 public:
-    Parser(const std::vector<Token>& tokens);
+    explicit Parser(const std::vector<Token>& tokens);
 
     ASTNodePtr parseProgram();
 
@@ -82,16 +112,17 @@ public:
 
 private:
     const std::vector<Token>& tokens;
-    std::size_t current;
+    std::size_t current = 0;
 
     std::vector<ParseError> errors;
     bool panicMode = false;
 
-    // Helpers
+    // helpers
     const Token& peek(int offset = 0) const;
     bool isAtEnd() const;
     bool check(TokenType type, int offset = 0) const;
     bool match(TokenType type);
+    bool matchAny(std::initializer_list<TokenType> types);
     const Token& advance();
     const Token& previous() const;
     const Token& expect(TokenType type, const std::string& message);
@@ -103,26 +134,44 @@ private:
     ASTNodePtr makeNode(ASTNodeType type, const Token& tok,
                         std::initializer_list<ASTNodePtr> children);
 
-    // Program
+    // program
     ASTNodePtr parseProgramInternal();
     ASTNodePtr parseDeclOrStmtList();
     ASTNodePtr parseDeclOrStmt();
     ASTNodePtr parseStmt();
 
-    // Declarations
+    // declarations
+    ASTNodePtr parseType();
     ASTNodePtr parseVarDecl();
-    ASTNodePtr parseArrayDecl();
     ASTNodePtr parseVarDeclList();
     ASTNodePtr parseVarDeclItem();
-    ASTNodePtr parseType();
+
+    ASTNodePtr parseTypedVarDecl();
+    ASTNodePtr parseTypedVarDeclList();
+    ASTNodePtr parseTypedVarDeclItem();
+
+    ASTNodePtr parseArrayDecl();
+    ASTNodePtr parseArrayInit();
     ASTNodePtr parseArrayLiteral();
+    ASTNodePtr parseArrayComp();
     ASTNodePtr parseExprList();
 
-    // Statements
-    ASTNodePtr parseAssignOpStmt();   // OP dst [src] [src]
-    ASTNodePtr parseAssignOpDst();    // IDENT or IDENT '[' Expr ']'
-    ASTNodePtr parseAssignOpSrc();    // Factor
+    // assignment / lvalue
+    ASTNodePtr parseLValue();
+    ASTNodePtr parseAssignOpStmt();
+
+    // print
+    ASTNodePtr parsePrintExpr();
     ASTNodePtr parsePrintStmt();
+
+    // match
+    ASTNodePtr parseMatchStmt();
+    ASTNodePtr parseMatchCaseListOpt();
+    ASTNodePtr parseMatchCase();
+    ASTNodePtr parseMatchPattern();
+    ASTNodePtr parseMatchBody();
+
+    // control
     ASTNodePtr parseIfStmt();
     ASTNodePtr parseIfElsePart();
     ASTNodePtr parseWhileStmt();
@@ -132,24 +181,23 @@ private:
     ASTNodePtr parseBlockBody();
     ASTNodePtr parseStmtList();
 
-    // For parts
+    // for parts
     ASTNodePtr parseForInit();
     ASTNodePtr parseForCond();
     ASTNodePtr parseForUpdate();
 
-    // Expressions
+    // expressions
     ASTNodePtr parseExpr();
-    ASTNodePtr parseBoolExpr();
+    ASTNodePtr parseCondExpr();
     ASTNodePtr parseBoolOr();
     ASTNodePtr parseBoolAnd();
-    ASTNodePtr parseRelOrArith();
-
+    ASTNodePtr parseRelExpr();
     ASTNodePtr parseArithExpr();
     ASTNodePtr parseTerm();
     ASTNodePtr parsePower();
     ASTNodePtr parseFactor();
 
-    // Builtin
+    // builtin
     ASTNodePtr parseBuiltinCall();
     ASTNodePtr parseBuiltinName();
     ASTNodePtr parseArgList();

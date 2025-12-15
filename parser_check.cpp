@@ -1,4 +1,3 @@
-// parser_check.cpp
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -11,8 +10,7 @@
 #include "ast_printer.h"
 
 static void printUsage(const char* prog) {
-    std::cerr << "Usage:\n"
-              << "  " << prog << " <source-file>\n";
+    std::cerr << "Usage:\n  " << prog << " <source-file>\n";
 }
 
 int main(int argc, char** argv) {
@@ -32,41 +30,33 @@ int main(int argc, char** argv) {
     buffer << in.rdbuf();
     std::string source = buffer.str();
 
-    // === Lexer ===
     Lexer lexer(source);
     std::vector<Token> tokens = lexer.tokenizeAll();
-
     if (tokens.empty() || tokens.back().type != TokenType::END_OF_FILE) {
         tokens.emplace_back(TokenType::END_OF_FILE, "", 0, 0);
     }
 
     std::cout << "=== TOKENS ===\n";
     for (const Token& tok : tokens) {
-        std::cout
-            << "Line " << tok.line
-            << ", Col " << tok.column
-            << " | " << tokenTypeToString(tok.type)
-            << " | \"" << tok.lexeme << "\"\n";
+        std::cout << "Line " << tok.line << ", Col " << tok.column
+                  << " | " << tokenTypeToString(tok.type)
+                  << " | \"" << tok.lexeme << "\"\n";
     }
 
-    // === Parser ===
     Parser parser(tokens);
     ASTNodePtr ast;
 
     try {
         ast = parser.parseProgram();
-    } catch (const ParseException&) {
-        // errors are collected in parser.getErrors()
-    }
+    } catch (const ParseException&) {}
 
     if (parser.hasErrors()) {
         const auto& errs = parser.getErrors();
         std::cerr << "\n=== PARSE ERRORS (" << errs.size() << ") ===\n";
         for (std::size_t i = 0; i < errs.size(); ++i) {
             const auto& e = errs[i];
-            std::cerr << "  [" << (i + 1) << "] "
-                      << "Line " << e.line << ", Col " << e.column
-                      << " : " << e.message << "\n";
+            std::cerr << "  [" << (i + 1) << "] Line " << e.line
+                      << ", Col " << e.column << " : " << e.message << "\n";
         }
         return 1;
     }

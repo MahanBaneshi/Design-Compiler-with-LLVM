@@ -1,4 +1,4 @@
-// tokens_json.h
+// Serializes the list of lexer tokens into a JSON-like string representation.
 #pragma once
 #include "Token.h"
 #include <vector>

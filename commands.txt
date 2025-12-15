@@ -1,6 +1,7 @@
 # compile:
 g++ -std=c++17 -Wall -Wextra -O2 main.cpp Lexer.cpp Parser.cpp -o main.exe
 g++ parser_check.cpp Lexer.cpp parser.cpp -o parser_check
+    .\parser_check.exe test_inputs/input.lang > outputs/output.out 2> outputs/output.err
 
 
 # test lexer:
@@ -28,24 +29,24 @@ make outputs:
         ./main.exe test_inputs/Parser&Lexer/17_errors_bad_expr.lang          > outputs/Parser&Lexer/17_errors_bad_expr.out          2> outputs/Parser&Lexer/17_errors_bad_expr.err
 
 parser check:
-    .\parser_check.exe test_inputs/Parser_Lexer/01_decl.lang > outputs/Parser_Lexer/01_decl.out 2> outputs/Parser_Lexer/01_decl.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/02_array.lang > outputs/Parser_Lexer/02_array.out 2> outputs/Parser_Lexer/02_array.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/03_assign.lang > outputs/Parser_Lexer/03_assign.out 2> outputs/Parser_Lexer/03_assign.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/04_unary.lang > outputs/Parser_Lexer/04_unary.out 2> outputs/Parser_Lexer/04_unary.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/05_if.lang > outputs/Parser_Lexer/05_if.out 2> outputs/Parser_Lexer/05_if.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/06_if_else_if.lang > outputs/Parser_Lexer/06_if_else_if.out 2> outputs/Parser_Lexer/06_if_else_if.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/07_while.lang > outputs/Parser_Lexer/07_while.out 2> outputs/Parser_Lexer/07_while.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/08_for.lang > outputs/Parser_Lexer/08_for.out 2> outputs/Parser_Lexer/08_for.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/09_foreach.lang > outputs/Parser_Lexer/09_foreach.out 2> outputs/Parser_Lexer/09_foreach.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/10_expression_arith.lang > outputs/Parser_Lexer/10_expression_arith.out 2> outputs/Parser_Lexer/10_expression_arith.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/11_expression_bool.lang > outputs/Parser_Lexer/11_expression_bool.out 2> outputs/Parser_Lexer/11_expression_bool.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/12_builtin.lang > outputs/Parser_Lexer/12_builtin.out 2> outputs/Parser_Lexer/12_builtin.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/13_mix_all.lang > outputs/Parser_Lexer/13_mix_all.out 2> outputs/Parser_Lexer/13_mix_all.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/14_errors_missing_semicolon.lang > outputs/Parser_Lexer/14_errors_missing_semicolon.out 2> outputs/Parser_Lexer/14_errors_missing_semicolon.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/15_errors_wrong_operator.lang > outputs/Parser_Lexer/15_errors_wrong_operator.out 2> outputs/Parser_Lexer/15_errors_wrong_operator.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/16_errors_bad_braces.lang > outputs/Parser_Lexer/16_errors_bad_braces.out 2> outputs/Parser_Lexer/16_errors_bad_braces.err -Encoding utf8
-    .\parser_check.exe test_inputs/Parser_Lexer/17_errors_bad_expr.lang > outputs/Parser_Lexer/17_errors_bad_expr.out 2> outputs/Parser_Lexer/17_errors_bad_expr.err -Encoding utf8
-
+    .\parser_check.exe test_inputs/Parser_Lexer/01_decl.lang > outputs/Parser_Lexer/01_decl.out 2> outputs/Parser_Lexer/01_decl.err
+    .\parser_check.exe test_inputs/Parser_Lexer/02_array.lang > outputs/Parser_Lexer/02_array.out 2> outputs/Parser_Lexer/02_array.err
+    .\parser_check.exe test_inputs/Parser_Lexer/03_assign.lang > outputs/Parser_Lexer/03_assign.out 2> outputs/Parser_Lexer/03_assign.err
+    .\parser_check.exe test_inputs/Parser_Lexer/04_unary.lang > outputs/Parser_Lexer/04_unary.out 2> outputs/Parser_Lexer/04_unary.err
+    .\parser_check.exe test_inputs/Parser_Lexer/05_if.lang > outputs/Parser_Lexer/05_if.out 2> outputs/Parser_Lexer/05_if.err
+    .\parser_check.exe test_inputs/Parser_Lexer/06_if_else_if.lang > outputs/Parser_Lexer/06_if_else_if.out 2> outputs/Parser_Lexer/06_if_else_if.err
+    .\parser_check.exe test_inputs/Parser_Lexer/07_while.lang > outputs/Parser_Lexer/07_while.out 2> outputs/Parser_Lexer/07_while.err
+    .\parser_check.exe test_inputs/Parser_Lexer/08_for.lang > outputs/Parser_Lexer/08_for.out 2> outputs/Parser_Lexer/08_for.err
+    .\parser_check.exe test_inputs/Parser_Lexer/09_foreach.lang > outputs/Parser_Lexer/09_foreach.out 2> outputs/Parser_Lexer/09_foreach.err
+    .\parser_check.exe test_inputs/Parser_Lexer/10_expression_arith.lang > outputs/Parser_Lexer/10_expression_arith.out 2> outputs/Parser_Lexer/10_expression_arith.err
+    .\parser_check.exe test_inputs/Parser_Lexer/11_expression_bool.lang > outputs/Parser_Lexer/11_expression_bool.out 2> outputs/Parser_Lexer/11_expression_bool.err
+    .\parser_check.exe test_inputs/Parser_Lexer/12_builtin.lang > outputs/Parser_Lexer/12_builtin.out 2> outputs/Parser_Lexer/12_builtin.err
+    .\parser_check.exe test_inputs/Parser_Lexer/13_mix_all.lang > outputs/Parser_Lexer/13_mix_all.out 2> outputs/Parser_Lexer/13_mix_all.err
+    .\parser_check.exe test_inputs/Parser_Lexer/14_errors_missing_semicolon.lang > outputs/Parser_Lexer/14_errors_missing_semicolon.out 2> outputs/Parser_Lexer/14_errors_missing_semicolon.err
+    .\parser_check.exe test_inputs/Parser_Lexer/15_errors_wrong_operator.lang > outputs/Parser_Lexer/15_errors_wrong_operator.out 2> outputs/Parser_Lexer/15_errors_wrong_operator.err
+    .\parser_check.exe test_inputs/Parser_Lexer/16_errors_bad_braces.lang > outputs/Parser_Lexer/16_errors_bad_braces.out 2> outputs/Parser_Lexer/16_errors_bad_braces.err
+    .\parser_check.exe test_inputs/Parser_Lexer/17_errors_bad_expr.lang > outputs/Parser_Lexer/17_errors_bad_expr.out 2> outputs/Parser_Lexer/17_errors_bad_expr.err
+    .\parser_check.exe test_inputs/Parser_Lexer/18_news.lang > outputs/Parser_Lexer/18_news.out 2> outputs/Parser_Lexer/18_news.err
 
 for sema:
 g++ -std=c++17 -Wall -Wextra -O2 main.cpp Lexer.cpp Parser.cpp Sema.cpp -o main.exe
@@ -57,3 +58,7 @@ Get-ChildItem test_inputs/Sema/*.lang | ForEach-Object {
 
 
 .\main.exe test_inputs\Sema\sema_ok_05_mixed_types.lang
+
+sema: 
+    g++ sema_check.cpp Lexer.cpp parser.cpp Sema.cpp -o sema_check
+    

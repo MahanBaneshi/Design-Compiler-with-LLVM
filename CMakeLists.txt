@@ -5,7 +5,6 @@ project(MyLangCompiler CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# مسیر نصب LLVM باید روی سیستم تنظیم شده باشد (مثلاً با llvm-config یا بسته‌های llvm-dev)
 find_package(LLVM REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -14,7 +13,6 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-# کامپوننت‌هایی که لازم داریم
 set(LLVM_COMPONENTS
     core
     support
@@ -35,6 +33,5 @@ add_executable(compiler
     CodeGen.cpp
     Runtime.cpp
 )
-
 
 target_link_libraries(compiler PRIVATE ${LLVM_LIBS})

@@ -1,0 +1,300 @@
+{
+  "type": "0",
+  "lexeme": "var",
+  "children": [
+    {
+      "type": "1",
+      "lexeme": "var",
+      "children": [
+        {
+          "type": "3",
+          "lexeme": "var",
+          "children": [
+            {
+              "type": "4",
+              "lexeme": "a",
+              "children": [
+                {
+                  "type": "4",
+                  "lexeme": "a",
+                  "children": [
+                    {
+                      "type": "30",
+                      "lexeme": "a",
+                      "children": [
+                      ]
+                    },
+                    {
+                      "type": "30",
+                      "lexeme": "int",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "3",
+          "lexeme": "var",
+          "children": [
+            {
+              "type": "4",
+              "lexeme": "b",
+              "children": [
+                {
+                  "type": "4",
+                  "lexeme": "b",
+                  "children": [
+                    {
+                      "type": "30",
+                      "lexeme": "b",
+                      "children": [
+                      ]
+                    },
+                    {
+                      "type": "30",
+                      "lexeme": "float",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "3",
+          "lexeme": "var",
+          "children": [
+            {
+              "type": "4",
+              "lexeme": "c",
+              "children": [
+                {
+                  "type": "4",
+                  "lexeme": "c",
+                  "children": [
+                    {
+                      "type": "30",
+                      "lexeme": "c",
+                      "children": [
+                      ]
+                    },
+                    {
+                      "type": "30",
+                      "lexeme": "bool",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "7",
+          "lexeme": "=",
+          "children": [
+            {
+              "type": "30",
+              "lexeme": "a",
+              "children": [
+              ]
+            },
+            {
+              "type": "17",
+              "lexeme": "10",
+              "children": [
+                {
+                  "type": "18",
+                  "lexeme": "10",
+                  "children": [
+                    {
+                      "type": "31",
+                      "lexeme": "10",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "7",
+          "lexeme": "=",
+          "children": [
+            {
+              "type": "30",
+              "lexeme": "b",
+              "children": [
+              ]
+            },
+            {
+              "type": "17",
+              "lexeme": "2.5",
+              "children": [
+                {
+                  "type": "18",
+                  "lexeme": "2.5",
+                  "children": [
+                    {
+                      "type": "32",
+                      "lexeme": "2.5",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "7",
+          "lexeme": "=",
+          "children": [
+            {
+              "type": "30",
+              "lexeme": "c",
+              "children": [
+              ]
+            },
+            {
+              "type": "17",
+              "lexeme": "||",
+              "children": [
+                {
+                  "type": "18",
+                  "lexeme": "||",
+                  "children": [
+                    {
+                      "type": "19",
+                      "lexeme": "||",
+                      "children": [
+                        {
+                          "type": "17",
+                          "lexeme": "<",
+                          "children": [
+                            {
+                              "type": "18",
+                              "lexeme": "<",
+                              "children": [
+                                {
+                                  "type": "21",
+                                  "lexeme": "<",
+                                  "children": [
+                                    {
+                                      "type": "30",
+                                      "lexeme": "a",
+                                      "children": [
+                                      ]
+                                    },
+                                    {
+                                      "type": "31",
+                                      "lexeme": "20",
+                                      "children": [
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "33",
+                          "lexeme": "false",
+                          "children": [
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "9",
+          "lexeme": "print",
+          "children": [
+            {
+              "type": "17",
+              "lexeme": "a",
+              "children": [
+                {
+                  "type": "18",
+                  "lexeme": "a",
+                  "children": [
+                    {
+                      "type": "30",
+                      "lexeme": "a",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "9",
+          "lexeme": "print",
+          "children": [
+            {
+              "type": "17",
+              "lexeme": "b",
+              "children": [
+                {
+                  "type": "18",
+                  "lexeme": "b",
+                  "children": [
+                    {
+                      "type": "30",
+                      "lexeme": "b",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "9",
+          "lexeme": "print",
+          "children": [
+            {
+              "type": "17",
+              "lexeme": "c",
+              "children": [
+                {
+                  "type": "18",
+                  "lexeme": "c",
+                  "children": [
+                    {
+                      "type": "30",
+                      "lexeme": "c",
+                      "children": [
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

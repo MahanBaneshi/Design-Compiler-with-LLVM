@@ -2,63 +2,22 @@
 #include "Sema.h"
 #include <iostream>
 
-// =====================================================
-// unwrap identifier from common wrappers (Identifier / LValue / Factor / Expr / CondExpr)
-// =====================================================
-
-static ASTNodePtr unwrapIdent(const ASTNodePtr& n) {
-    if (!n) return nullptr;
-
-    if (n->type == ASTNodeType::Identifier) return n;
-
-    if (n->type == ASTNodeType::LValue && !n->children.empty())
-        return unwrapIdent(n->children[0]);
-
-    if ((n->type == ASTNodeType::Factor ||
-        n->type == ASTNodeType::Expr ||
-        n->type == ASTNodeType::CondExpr) &&
-        !n->children.empty())
-        return unwrapIdent(n->children[0]);
-
-
-    return nullptr;
-}
-
-static bool isNum(ValueType t) {
-    return t == ValueType::TYPE_INT || t == ValueType::TYPE_FLOAT;
-}
-
-static ValueType promote(ValueType a, ValueType b) {
-    if (a == ValueType::TYPE_FLOAT || b == ValueType::TYPE_FLOAT) return ValueType::TYPE_FLOAT;
-    if (a == ValueType::TYPE_INT && b == ValueType::TYPE_INT) return ValueType::TYPE_INT;
-    return ValueType::TYPE_UNKNOWN;
-}
-
-// =====================================================
-// ctor / public
-// =====================================================
-
 Sema::Sema(const ASTNodePtr& root)
     : root(root) {}
 
 bool Sema::analyze() {
+    hasError = false;
+    errors.clear();
     visit(root);
     return !hasError;
 }
 
-// =====================================================
-// error reporting
-// =====================================================
-
 void Sema::report(const Token& tok, const std::string& msg) {
+    errors.push_back(SemaError{ tok.line, tok.column, msg });
+    hasError = true;
     std::cerr << "Semantic error at line " << tok.line
               << ", col " << tok.column << ": " << msg << "\n";
-    hasError = true;
 }
-
-// =====================================================
-// symbol helpers
-// =====================================================
 
 bool Sema::isVarDefined(const std::string& name, const Token& tok) {
     if (symbols.count(name) == 0) {
@@ -69,16 +28,15 @@ bool Sema::isVarDefined(const std::string& name, const Token& tok) {
 }
 
 ValueType Sema::stringToType(const std::string& s) {
-    if (s == "int")   return ValueType::TYPE_INT;
+    if (s == "int") return ValueType::TYPE_INT;
     if (s == "float") return ValueType::TYPE_FLOAT;
-    if (s == "bool")  return ValueType::TYPE_BOOL;
+    if (s == "bool") return ValueType::TYPE_BOOL;
     return ValueType::TYPE_UNKNOWN;
 }
 
-// =====================================================
-// dispatcher
-// =====================================================
-
+// =============================
+// Dispatcher
+// =============================
 void Sema::visit(const ASTNodePtr& node) {
     if (!node) return;
 
@@ -135,20 +93,19 @@ void Sema::visit(const ASTNodePtr& node) {
     }
 }
 
-// =====================================================
-// statements
-// =====================================================
-
+// =============================
+// Visiting statements
+// =============================
 void Sema::visitStmtList(const ASTNodePtr& node) {
     for (auto& ch : node->children) visit(ch);
 }
 
 void Sema::visitVarDecl(const ASTNodePtr& node) {
-    if (!node || node->children.empty()) return;
+    if (node->children.empty()) return;
     auto list = node->children[0];
 
     for (auto& item : list->children) {
-        if (!item || item->children.size() < 2) continue;
+        if (item->children.size() < 2) continue;
 
         auto idNode = item->children[0];
         auto typeNode = item->children[1];
@@ -161,11 +118,12 @@ void Sema::visitVarDecl(const ASTNodePtr& node) {
             continue;
         }
 
-        symbols[name] = stringToType(typeStr);
+        ValueType vt = stringToType(typeStr);
+        symbols[name] = vt;
 
         if (item->children.size() >= 3) {
             ValueType rhsType = checkExpr(item->children[2]);
-            if (rhsType != ValueType::TYPE_UNKNOWN && symbols[name] != rhsType) {
+            if (vt != ValueType::TYPE_UNKNOWN && rhsType != ValueType::TYPE_UNKNOWN && vt != rhsType) {
                 report(idNode->token, "Type mismatch in initialization of '" + name + "'");
             }
         }
@@ -173,78 +131,93 @@ void Sema::visitVarDecl(const ASTNodePtr& node) {
 }
 
 void Sema::visitArrayDecl(const ASTNodePtr& node) {
-    if (!node || node->children.empty()) return;
+    if (node->children.empty()) return;
+
     auto idNode = node->children[0];
     std::string name = idNode->token.lexeme;
 
-    if (symbols.count(name))
+    if (symbols.count(name)) {
         report(idNode->token, "Redefinition of array '" + name + "'");
+        return;
+    }
 
     symbols[name] = ValueType::TYPE_ARRAY;
-
-    // optionally validate initializer
-    if (node->children.size() >= 2) checkExpr(node->children[1]);
 }
 
 void Sema::visitAssignOpStmt(const ASTNodePtr& node) {
     if (!node) return;
     TokenType op = node->token.type;
 
-    auto getName = [&](int i, const char* what) -> std::string {
+    auto needName = [&](int i, const char* what) -> std::string {
         if (i < 0 || i >= (int)node->children.size()) {
             report(node->token, std::string("Malformed ") + what);
             return "";
         }
-        auto id = unwrapIdent(node->children[(size_t)i]);
-        if (!id) {
+        auto n = node->children[(size_t)i];
+        if (!n) {
             report(node->token, std::string("Malformed ") + what);
             return "";
         }
-        return id->token.lexeme;
+
+        if (n->type == ASTNodeType::Identifier) return n->token.lexeme;
+
+        if (n->type == ASTNodeType::Factor && !n->children.empty() &&
+            n->children[0] && n->children[0]->type == ASTNodeType::Identifier) {
+            return n->children[0]->token.lexeme;
+        }
+
+        report(node->token, std::string("Malformed ") + what);
+        return "";
     };
 
-    std::string x = getName(0, "assignment op target");
+    std::string x = needName(0, "assignment op target");
     if (x.empty()) return;
-
     if (!isVarDefined(x, node->children[0]->token)) return;
+
     ValueType tx = symbols[x];
 
     if (op == TokenType::KW_INC || op == TokenType::KW_DEC) {
-        if (tx != ValueType::TYPE_INT)
-            report(node->token, "INC/DEC only allowed on int variables");
+        if (tx != ValueType::TYPE_INT) report(node->token, "INC/DEC only allowed on int variables");
         return;
     }
 
-    std::string y = getName(1, "assignment op operand");
+    std::string y = needName(1, "assignment op operand");
     if (y.empty()) return;
     if (!isVarDefined(y, node->children[1]->token)) return;
     ValueType ty = symbols[y];
 
     if (op == TokenType::KW_PLE || op == TokenType::KW_MIE) {
-        if (!(isNum(tx) && isNum(ty)))
-            report(node->token, "PLE/MIE operands must be numeric");
+        bool xNum = (tx == ValueType::TYPE_INT || tx == ValueType::TYPE_FLOAT);
+        bool yNum = (ty == ValueType::TYPE_INT || ty == ValueType::TYPE_FLOAT);
+        if (!xNum || !yNum) report(node->token, "PLE/MIE operands must be numeric");
         return;
     }
 
-    std::string z = getName(2, "assignment op operand");
+    std::string z = needName(2, "assignment op operand");
     if (z.empty()) return;
     if (!isVarDefined(z, node->children[2]->token)) return;
     ValueType tz = symbols[z];
 
     if (op == TokenType::KW_AND || op == TokenType::KW_OR) {
-        if (tx != ValueType::TYPE_BOOL || ty != ValueType::TYPE_BOOL || tz != ValueType::TYPE_BOOL)
+        if (tx != ValueType::TYPE_BOOL || ty != ValueType::TYPE_BOOL || tz != ValueType::TYPE_BOOL) {
             report(node->token, "AND/OR only allowed on bool variables");
+        }
         return;
     }
 
-    if (!(isNum(tx) && isNum(ty) && isNum(tz))) {
-        report(node->token, "Arithmetic operands must be numeric");
-        return;
-    }
+    bool xNum = (tx == ValueType::TYPE_INT || tx == ValueType::TYPE_FLOAT);
+    bool yNum = (ty == ValueType::TYPE_INT || ty == ValueType::TYPE_FLOAT);
+    bool zNum = (tz == ValueType::TYPE_INT || tz == ValueType::TYPE_FLOAT);
+    if (!xNum) report(node->token, "Assignment target must be numeric for arithmetic operation");
+    if (!yNum || !zNum) report(node->token, "Arithmetic operands must be numeric");
 
-    ValueType res = promote(ty, tz);
-    if (res != ValueType::TYPE_UNKNOWN && tx != res)
+    ValueType result = (ty == ValueType::TYPE_FLOAT || tz == ValueType::TYPE_FLOAT)
+                         ? ValueType::TYPE_FLOAT
+                         : ValueType::TYPE_INT;
+
+    if (tx != result && tx != ValueType::TYPE_UNKNOWN) {
         report(node->token, "Type mismatch in assignment operation");
+    }
 }
 
 void Sema::visitPrint(const ASTNodePtr& node) {
@@ -253,41 +226,22 @@ void Sema::visitPrint(const ASTNodePtr& node) {
 }
 
 void Sema::visitIf(const ASTNodePtr& node) {
-    if (!node) return;
-
-    // else-wrapper node: token is KW_ELSE and it only wraps one child (block or nested if)
-    if (node->token.type == TokenType::KW_ELSE) {
-        if (node->children.empty()) {
-            report(node->token, "Malformed else clause");
-            return;
-        }
-        visit(node->children[0]);
-        return;
-    }
-
-    // normal if: children = [cond, thenBlock, (optional elsePart)]
-    if (node->children.size() < 2) {
-        report(node->token, "Malformed if statement");
-        return;
-    }
+    if (!node || node->children.size() < 2) return;
 
     ValueType condType = checkExpr(node->children[0]);
-    if (condType != ValueType::TYPE_BOOL)
-        report(node->children[0]->token, "If condition must be boolean");
+    if (condType != ValueType::TYPE_BOOL && condType != ValueType::TYPE_UNKNOWN)
+        report(node->token, "If condition must be boolean");
 
     visit(node->children[1]);
-
-    if (node->children.size() >= 3)
-        visit(node->children[2]);
+    if (node->children.size() >= 3) visit(node->children[2]);
 }
-
 
 void Sema::visitWhile(const ASTNodePtr& node) {
     if (!node || node->children.size() < 2) return;
 
     ValueType condType = checkExpr(node->children[0]);
-    if (condType != ValueType::TYPE_BOOL)
-        report(node->children[0]->token, "While condition must be boolean");
+    if (condType != ValueType::TYPE_BOOL && condType != ValueType::TYPE_UNKNOWN)
+        report(node->token, "While condition must be boolean");
 
     visit(node->children[1]);
 }
@@ -297,13 +251,11 @@ void Sema::visitFor(const ASTNodePtr& node) {
 
     visit(node->children[0]);
 
-    if (!node->children[1] || node->children[1]->children.empty()) {
-        report(node->token, "Malformed for condition");
-    } else {
-        ValueType condType = checkExpr(node->children[1]->children[0]);
-        if (condType != ValueType::TYPE_BOOL)
-            report(node->children[1]->token, "For condition must be boolean");
-    }
+    auto condWrap = node->children[1];
+    ValueType condType = ValueType::TYPE_UNKNOWN;
+    if (condWrap && !condWrap->children.empty()) condType = checkExpr(condWrap->children[0]);
+    if (condType != ValueType::TYPE_BOOL && condType != ValueType::TYPE_UNKNOWN)
+        report(node->token, "For condition must be boolean");
 
     visit(node->children[2]);
     visit(node->children[3]);
@@ -329,22 +281,20 @@ void Sema::visitBlock(const ASTNodePtr& node) {
     visit(node->children[0]);
 }
 
-// =====================================================
-// expression typing
-// =====================================================
-
+// =============================
+// Expression checking
+// =============================
 ValueType Sema::checkExpr(const ASTNodePtr& node) {
     if (!node) return ValueType::TYPE_UNKNOWN;
 
     switch (node->type) {
         case ASTNodeType::Expr:
         case ASTNodeType::CondExpr:
-            if (node->children.empty()) return ValueType::TYPE_UNKNOWN;
-            return checkExpr(node->children[0]);
+            if (!node->children.empty()) return checkExpr(node->children[0]);
+            return ValueType::TYPE_UNKNOWN;
 
         case ASTNodeType::BoolOr:
         case ASTNodeType::BoolAnd: {
-            if (node->children.size() < 2) return ValueType::TYPE_UNKNOWN;
             ValueType L = checkExpr(node->children[0]);
             ValueType R = checkExpr(node->children[1]);
             if (L != ValueType::TYPE_BOOL || R != ValueType::TYPE_BOOL)
@@ -353,49 +303,28 @@ ValueType Sema::checkExpr(const ASTNodePtr& node) {
         }
 
         case ASTNodeType::RelExpr: {
-            if (node->children.size() < 2) return ValueType::TYPE_UNKNOWN;
             ValueType L = checkExpr(node->children[0]);
             ValueType R = checkExpr(node->children[1]);
-
-            if (L == ValueType::TYPE_UNKNOWN || R == ValueType::TYPE_UNKNOWN)
-                return ValueType::TYPE_BOOL;
-
-            if (L != R && !(isNum(L) && isNum(R)))
-                report(node->token, "Operands of comparison must be compatible");
-
+            if (L != ValueType::TYPE_UNKNOWN && R != ValueType::TYPE_UNKNOWN && L != R)
+                report(node->token, "Operands of comparison must have same type");
             return ValueType::TYPE_BOOL;
         }
 
         case ASTNodeType::ArithExpr:
         case ASTNodeType::Term:
         case ASTNodeType::Power: {
-            if (node->children.empty()) return ValueType::TYPE_UNKNOWN;
             ValueType L = checkExpr(node->children[0]);
             if (node->children.size() == 1) return L;
 
-            if (node->children.size() < 2) return ValueType::TYPE_UNKNOWN;
             ValueType R = checkExpr(node->children[1]);
 
-            if (!isNum(L) || !isNum(R))
-                report(node->token, "Arithmetic operands must be numeric");
+            bool Lnum = (L == ValueType::TYPE_INT || L == ValueType::TYPE_FLOAT);
+            bool Rnum = (R == ValueType::TYPE_INT || R == ValueType::TYPE_FLOAT);
+            if (!Lnum || !Rnum) report(node->token, "Arithmetic operands must be numeric");
 
-            return promote(L, R);
-        }
-
-        case ASTNodeType::Factor:
-            if (node->children.empty()) return ValueType::TYPE_UNKNOWN;
-            return checkExpr(node->children[0]);
-
-        case ASTNodeType::LValue: {
-            auto id = unwrapIdent(node);
-            if (!id) return ValueType::TYPE_UNKNOWN;
-
-            std::string name = id->token.lexeme;
-            if (!isVarDefined(name, id->token)) return ValueType::TYPE_UNKNOWN;
-
-            ValueType base = symbols[name];
-            if (base == ValueType::TYPE_ARRAY) return ValueType::TYPE_INT; // element type assumption
-            return base;
+            return (L == ValueType::TYPE_FLOAT || R == ValueType::TYPE_FLOAT)
+                     ? ValueType::TYPE_FLOAT
+                     : ValueType::TYPE_INT;
         }
 
         case ASTNodeType::Identifier: {
@@ -404,46 +333,11 @@ ValueType Sema::checkExpr(const ASTNodePtr& node) {
             return symbols[name];
         }
 
-        case ASTNodeType::IntLiteral:   return ValueType::TYPE_INT;
+        case ASTNodeType::IntLiteral: return ValueType::TYPE_INT;
         case ASTNodeType::FloatLiteral: return ValueType::TYPE_FLOAT;
-        case ASTNodeType::BoolLiteral:  return ValueType::TYPE_BOOL;
-
-        case ASTNodeType::BuiltinCall: {
-            std::string fname = node->token.lexeme;
-
-            if (fname == "to_int")   return ValueType::TYPE_INT;
-            if (fname == "to_float") return ValueType::TYPE_FLOAT;
-            if (fname == "to_bool")  return ValueType::TYPE_BOOL;
-
-            if (fname == "length") {
-                if (!node->children.empty()) checkExpr(node->children[0]);
-                return ValueType::TYPE_INT;
-            }
-
-            if (fname == "abs") {
-                if (!node->children.empty()) {
-                    ValueType t = checkExpr(node->children[0]);
-                    if (!isNum(t)) report(node->token, "abs expects numeric");
-                    return t;
-                }
-                return ValueType::TYPE_UNKNOWN;
-            }
-
-            if (fname == "max" || fname == "index" || fname == "find") {
-                if (!node->children.empty()) checkExpr(node->children[0]);
-                return ValueType::TYPE_INT;
-            }
-
-            if (!node->children.empty()) checkExpr(node->children[0]);
-            return ValueType::TYPE_UNKNOWN;
-        }
-
-        case ASTNodeType::ArgList:
-            for (auto& ch : node->children) checkExpr(ch);
-            return node->children.empty() ? ValueType::TYPE_UNKNOWN : checkExpr(node->children[0]);
+        case ASTNodeType::BoolLiteral: return ValueType::TYPE_BOOL;
 
         default:
-            for (auto& ch : node->children) checkExpr(ch);
             return ValueType::TYPE_UNKNOWN;
     }
 }

@@ -270,4 +270,4 @@ These diagnostics help users debug source programs effectively.
 
 # Author
 
-Mahan Baneshi _ Compiler Design Project implemented using LLVM infrastructure.
+Mahan Baneshi _ Compiler Design Project implemented using LLVM infrastructure. _ Shahid Beheshti University
